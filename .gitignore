@@ -1,0 +1,14 @@
+*.ipynb
+*.sh
+
+*.php
+model/shards_
+__pycache__
+model/__pycache__
+model/random_shards_
+model/new_shards_
+factor_analysis/__pycache__
+model/shards
+checkpoints/
+.vscode
+.ipynb_checkpoints
