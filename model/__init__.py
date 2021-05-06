@@ -23,7 +23,7 @@ def run_model(start_epoch, diff_epoch):
   batch_size = 32
 
   net = ImageColorNet(batch_size)
-  print(summary(net, torch.zeros(batch_size,1,224,224), torch.zeros(batch_size,3,299,299), show_input=False))
+  print(summary(net, torch.zeros(batch_size,1,225,225), torch.zeros(batch_size,3,299,299), show_input=False))
   net_optimizer = optim.Adam(net.parameters(), lr=1e-4, betas=(0.9,0.999), eps=1e-8)
 
   torch.autograd.set_detect_anomaly(True)

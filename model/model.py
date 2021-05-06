@@ -61,7 +61,7 @@ class ImageColorNet(nn.Module):
         self.conv_22 = nn.ConvTranspose2d(2, 2, kernel_size=3, stride=2, padding=1)
 
     def forward(self, output, output_inception):
-        output = output.view(self.batch_size,1,225,225).float()
+        output = output.view(self.batch_size,1,225,225)
         
         x = F.relu(self.conv1(output))
         x = self.pool1(x)

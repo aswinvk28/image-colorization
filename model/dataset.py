@@ -4,9 +4,6 @@ from glob import glob
 import numpy as np
 from PIL import Image
 
-transform = transforms.Compose([transforms.Resize((224,224)),
-                                transforms.Grayscale(num_output_channels=1),
-                                transforms.ToTensor()])
 color_transform = transforms.Compose([transforms.Resize((225,225)),
                                 transforms.ToTensor()])
 
