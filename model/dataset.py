@@ -14,9 +14,6 @@ inception_transform = transforms.Compose([transforms.Resize((299,299)),
                                 transforms.Grayscale(num_output_channels=3),
                                 transforms.ToTensor()])
 
-dataset = datasets.ImageFolder(
-  "E:\\Drives-Linux-ubuntu-2020\\home\\aswin\\Documents\\Deep-Learning-Projects\\open_images_dataset\\dataset\\train", 
-  transform=transform)
 inception_dataset = datasets.ImageFolder(
   "E:\\Drives-Linux-ubuntu-2020\\home\\aswin\\Documents\\Deep-Learning-Projects\\open_images_dataset\\dataset\\train", 
   transform=inception_transform)
@@ -24,9 +21,6 @@ color_dataset = datasets.ImageFolder(
   "E:\\Drives-Linux-ubuntu-2020\\home\\aswin\\Documents\\Deep-Learning-Projects\\open_images_dataset\\dataset\\train", 
   transform=color_transform)
 
-val_dataset = datasets.ImageFolder(
-  "E:\\Drives-Linux-ubuntu-2020\\home\\aswin\\Documents\\Deep-Learning-Projects\\open_images_dataset\\dataset\\validation", 
-  transform=transform)
 val_inception_dataset = datasets.ImageFolder(
   "E:\\Drives-Linux-ubuntu-2020\\home\\aswin\\Documents\\Deep-Learning-Projects\\open_images_dataset\\dataset\\validation", 
   transform=inception_transform)

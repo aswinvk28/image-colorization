@@ -11,7 +11,7 @@ import math
 import threading
 from PIL import Image
 import cv2
-from .dataset import dataset, inception_dataset, color_dataset, val_dataset, val_color_dataset, val_inception_dataset
+from .dataset import inception_dataset, color_dataset, val_color_dataset, val_inception_dataset
 from .persistence import load_model, save_model
 from .model import ImageColorNet
 from pytorch_model_summary import summary
@@ -27,10 +27,8 @@ def run_model(start_epoch, diff_epoch):
   net_optimizer = optim.Adam(net.parameters(), lr=1e-4, betas=(0.9,0.999), eps=1e-8)
 
   torch.autograd.set_detect_anomaly(True)
-  dataloader = enumerate(torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False))
   inception_dataloader = enumerate(torch.utils.data.DataLoader(inception_dataset, batch_size=batch_size, shuffle=False))
   color_dataloader = enumerate(torch.utils.data.DataLoader(color_dataset, batch_size=batch_size, shuffle=False))
-  val_dataloader = enumerate(torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False))
   val_inception_dataloader = enumerate(torch.utils.data.DataLoader(val_inception_dataset, batch_size=batch_size, shuffle=False))
   val_color_dataloader = enumerate(torch.utils.data.DataLoader(val_color_dataset, batch_size=batch_size, shuffle=False))
 
@@ -49,12 +47,10 @@ def run_model(start_epoch, diff_epoch):
     for ii, data in color_dataloader:
       net.train()
       color_images, color_labels = data
-      i, data = next(iter(dataloader))
-      images, labels = data
-      i, inception_data = next(iter(inception_dataloader))
-      inception_images, inception_labels = inception_data
+      lab_images = colors.rgb_to_lab(color_images) / 255
+      i, (inception_images, inception_labels) = next(iter(inception_dataloader))
 
-      output = net.forward(images, inception_images)
+      output = net.forward(lab_images[:,0,:,:], inception_images)
       l2_reg = None
       reg_lambda = 0.5
       for i, param in net.named_parameters():
@@ -69,7 +65,6 @@ def run_model(start_epoch, diff_epoch):
             l2_reg = param.norm(2)**2
           else:
             l2_reg = l2_reg + param.norm(2)**2
-      lab_images = colors.rgb_to_lab(color_images) / 255
       loss = criterion(output, lab_images[:,1:,:,:]) + l2_reg * reg_lambda
       loss.backward()
       print("Epoch: ", epoch, ", Batch: ", ii,  ", Loss: ", loss.item())
@@ -80,14 +75,10 @@ def run_model(start_epoch, diff_epoch):
       if(ii % 10 == 0):
         net.eval()
         with torch.no_grad():
-          i, val_data = next(iter(val_dataloader))
-          val_images, val_labels = val_data
-          i, val_inception_data = next(iter(val_inception_dataloader))
-          val_inception_images, val_inception_labels = val_inception_data
-          i, val_color_data = next(iter(val_color_dataloader))
-          val_color_images, val_color_labels = val_color_data
+          i, (val_inception_images, val_inception_labels) = next(iter(val_inception_dataloader))
+          i, (val_color_images, val_color_labels) = next(iter(val_color_dataloader))
           val_lab_images = colors.rgb_to_lab(val_color_images) / 255
-          val_output = net.forward(val_images, val_inception_images)
+          val_output = net.forward(val_lab_images[:,0,:,:], val_inception_images)
           val_loss = criterion(val_output, val_lab_images[:,1:,:,:])
           val_accuracy = val_criterion(val_output, val_lab_images[:,1:,:,:])
           print("Epoch: ", epoch, ", Batch: ", ii,  ", Val Loss: ", val_loss.item(), ", Mean Accuracy: ", val_accuracy.item())
