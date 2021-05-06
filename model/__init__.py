@@ -42,7 +42,7 @@ def run_model(start_epoch, diff_epoch):
 
     # load network from checkpoint
     if os.path.isfile('checkpoints/img_color-'+str(epoch)+'_'+str(0)+'.checkpoint.pth'):
-      net = load_model(net, net_optimizer, epoch, 1)
+      net = load_model(net, net_optimizer, epoch, 0)
 
     print("Training Epoch: ", epoch)
     print("Batch Size: ", batch_size)
