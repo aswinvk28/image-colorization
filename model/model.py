@@ -3,7 +3,7 @@ import torch
 from torchvision.models import inception_v3
 import torch.nn.functional as F
 
-size = (1, 224, 224)
+size = (1, 225, 225)
 
 class ImageColorNet(nn.Module):
     def __init__(self, batch_size):
@@ -12,10 +12,10 @@ class ImageColorNet(nn.Module):
         self.batch_size = batch_size
 
         # encoder - input
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1)
-        self.pool1 = nn.MaxPool2d(kernel_size=(2, 2), stride=2)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
+        self.pool1 = nn.AvgPool2d(kernel_size=(2, 2), stride=2)
 
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(32, 128, kernel_size=3, stride=1, padding=1)
         self.conv3 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
@@ -40,9 +40,12 @@ class ImageColorNet(nn.Module):
         self.model_inceptionv3 = inception_v3(pretrained=True, aux_logits=False)
         self.linear1 = nn.Linear(2048, 128)
         self.linear2 = nn.Linear(128, 1)
+        self.linear3 = nn.Linear(128, 2)
+
+        # self.layernorm = nn.LayerNorm([28, 28])
 
         for i, param in self.model_inceptionv3.named_parameters():
-              param.requires_grad = False
+            param.requires_grad = False
 
         num_ftrs = self.model_inceptionv3.fc.in_features
         self.model_inceptionv3.fc = nn.Linear(num_ftrs, num_ftrs*128)
@@ -51,7 +54,7 @@ class ImageColorNet(nn.Module):
             for params in child.parameters():
                 params.requires_grad = False
                 
-        self.conv_15 = nn.Conv2d(384, 128, kernel_size=3, stride=1, padding=1)
+        self.conv_15 = nn.Conv2d(258, 128, kernel_size=3, stride=1, padding=1)
         self.conv_16 = nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2, padding=1)
         self.conv_17 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
         self.conv_18 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
@@ -93,18 +96,20 @@ class ImageColorNet(nn.Module):
         inception_output = self.linear1(inception_output.view(self.batch_size, 128, 2048))
         inception_output = self.linear2(inception_output.view(self.batch_size, 128, 128))
         
-        inception_output = inception_output.view(self.batch_size, 128)
-        inception_output = inception_output.repeat(28, 28)
+        inception_output = self.linear3(inception_output.view(self.batch_size, 1, 128))
+        inception_output = inception_output.view(self.batch_size, 2).repeat(28, 28)
+        inception_output = inception_output.view(self.batch_size, 2, 28, 28)
+        # inception_output = self.layernorm(inception_output)
         
-        x = torch.cat([inception_output.view(self.batch_size, 128, 28, 28), x], dim=1)
+        x = torch.cat([inception_output, x], dim=1)
         
-        x = self.conv_15(x)
+        x = F.relu(self.conv_15(x))
         x = F.relu(self.conv_16(x))
         x = F.relu(self.conv_17(x))
         x = F.relu(self.conv_18(x))
         x = F.relu(self.conv_19(x))
         x = F.relu(self.conv_20(x))
         x = F.relu(self.conv_21(x))
-        x = F.relu(self.conv_22(x))
+        x = F.softmax(self.conv_22(x), dim=1)
         
         return x
